@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraWeather - Smart Weather, AQI, World Clock, Timer & Calendar</title>
+    <title>AuraWeather - Smart Weather, AQI, World Clock, Timer & 1950-2045 Calendar</title>
     <!-- Tailwind CSS for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -142,17 +142,27 @@
         <!-- Hourly Forecast Section -->
         <div class="glass-panel p-6 rounded-3xl shadow-xl">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-clock text-cyan-300"></i> Hourly Forecast
+                <i class="fa-solid fa-clock text-cyan-300"></i> Hourly Forecast (Next 24 Hours)
             </h3>
             <div id="hourlyContainer" class="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
                 <div class="text-sm text-white/70">Loading forecast...</div>
             </div>
         </div>
 
-        <!-- Utility Grid: World Clocks, Timer & Calendar -->
+        <!-- 7-Day Weekly Forecast Section -->
+        <div class="glass-panel p-6 rounded-3xl shadow-xl">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-week text-yellow-300"></i> 7-Day Extended Forecast
+            </h3>
+            <div id="weeklyContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                <div class="text-sm text-white/70 col-span-full">Loading weekly forecast...</div>
+            </div>
+        </div>
+
+        <!-- Utility Grid: World Clocks, Timer & Calendar (1950-2045) -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- World Clock Hub (Col span 1) -->
+            <!-- World Clock Hub -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
                 <div>
                     <div class="flex justify-between items-center mb-4">
@@ -180,7 +190,7 @@
                 </div>
             </div>
 
-            <!-- Timer & Stopwatch Hub (Col span 1) -->
+            <!-- Timer & Stopwatch Hub -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
                 <div>
                     <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
@@ -212,14 +222,22 @@
                 </div>
             </div>
 
-            <!-- Calendar & Holidays Hub (Col span 1) -->
+            <!-- Calendar & Holidays Hub (1950 - 2045) -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
                 <div>
-                    <div class="flex justify-between items-center mb-3">
+                    <!-- Calendar Header with Month/Year Selectors -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-2 mb-3">
                         <h3 class="text-lg font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-days text-rose-300"></i> Calendar & Holidays
+                            <i class="fa-solid fa-calendar-days text-rose-300"></i> Calendar (1950-2045)
                         </h3>
-                        <span id="calendarMonthYear" class="text-xs font-semibold px-2 py-1 bg-white/20 rounded-lg">--</span>
+                        <div class="flex gap-1">
+                            <select id="calMonthSelect" onchange="onCalendarSelectorChange()" class="px-2 py-1 text-xs rounded-lg bg-white/20 text-white focus:outline-none">
+                                <!-- Months populated dynamically -->
+                            </select>
+                            <select id="calYearSelect" onchange="onCalendarSelectorChange()" class="px-2 py-1 text-xs rounded-lg bg-white/20 text-white focus:outline-none">
+                                <!-- Years 1950 to 2045 populated dynamically -->
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Weekdays Header -->
@@ -236,7 +254,7 @@
                 <!-- Holiday Notice Box -->
                 <div id="holidayNotice" class="bg-white/10 p-2.5 rounded-xl border border-white/10 text-xs flex items-center gap-2">
                     <i class="fa-solid fa-gift text-yellow-300 text-sm"></i>
-                    <span id="holidayText" class="truncate font-medium">Checking today's holiday status...</span>
+                    <span id="holidayText" class="truncate font-medium">Select a date to check holidays...</span>
                 </div>
             </div>
 
@@ -257,6 +275,9 @@
         let timerInterval = null;
         let isTimerRunning = false;
 
+        // Calendar state
+        let currentCalendarDate = new Date();
+
         // Major National & Global Holidays Database (Month-Day key)
         const holidays = {
             "1-1": "New Year's Day",
@@ -268,7 +289,7 @@
             "7-4": "US Independence Day",
             "8-15": "Independence Day",
             "10-31": "Halloween",
-            "11-25": "Thanksgiving (Approx)",
+            "11-25": "Thanksgiving",
             "12-25": "Christmas Day",
             "12-31": "New Year's Eve"
         };
@@ -278,6 +299,7 @@
             getWeatherData("Kolkata");
             initClocks();
             setInterval(updateClocks, 1000);
+            initCalendarSelectors();
             renderCalendar();
         });
 
@@ -301,7 +323,7 @@
                 const { latitude, longitude, name, country } = geoData.results[0];
                 document.getElementById('cityName').innerText = `${name}, ${country || ''}`;
 
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,uv_index&air_quality=european_aqi&timezone=auto`);
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min&air_quality=european_aqi&timezone=auto`);
                 const data = await weatherRes.json();
 
                 updateUI(data);
@@ -315,6 +337,7 @@
         function updateUI(data) {
             const current = data.current;
             const hourly = data.hourly;
+            const daily = data.daily;
             
             document.getElementById('temperature').innerText = `${Math.round(current.temperature_2m)}°C`;
             document.getElementById('humidity').innerText = `${current.relative_humidity_2m}%`;
@@ -342,6 +365,7 @@
             updateUVWidget(uvVal);
 
             renderHourlyForecast(hourly, currentHourIndex);
+            renderWeeklyForecast(daily);
         }
 
         function interpretWeatherCode(code, isDay) {
@@ -425,6 +449,32 @@
             }
         }
 
+        function renderWeeklyForecast(daily) {
+            const container = document.getElementById('weeklyContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < daily.time.length; i++) {
+                const dateObj = new Date(daily.time[i]);
+                const dayName = i === 0 ? "Today" : dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                const minTemp = Math.round(daily.temperature_2m_min[i]);
+                const code = daily.weather_code[i];
+                const info = interpretWeatherCode(code, 1);
+
+                const card = document.createElement('div');
+                card.className = "flex flex-col items-center justify-between p-3.5 bg-white/10 rounded-2xl border border-white/10 shadow-sm";
+                card.innerHTML = `
+                    <span class="text-xs font-bold text-white/90">${dayName}</span>
+                    <i class="fa-solid ${info.icon} text-2xl my-2"></i>
+                    <div class="text-center">
+                        <span class="font-bold text-sm">${maxTemp}°</span>
+                        <span class="text-xs text-white/70 ml-1">${minTemp}°</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
         // --- World Clocks Functionality ---
         function initClocks() {
             updateClocks();
@@ -491,7 +541,7 @@
 
         function startTimer() {
             if (isTimerRunning) return;
-            if (timerSeconds <= 0) timerSeconds = 300; // Default 5 mins if 0
+            if (timerSeconds <= 0) timerSeconds = 300; 
             isTimerRunning = true;
             document.getElementById('timerLabel').innerText = "Running...";
             
@@ -520,15 +570,46 @@
             document.getElementById('timerLabel').innerText = "Ready";
         }
 
-        // --- Calendar & Holiday Functionality ---
-        function renderCalendar() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const todayDate = now.getDate();
-            const currentMonthKey = now.toLocaleString('default', { month: 'long' });
+        // --- Calendar & Holiday Functionality (1950 - 2045) ---
+        function initCalendarSelectors() {
+            const monthSelect = document.getElementById('calMonthSelect');
+            const yearSelect = document.getElementById('calYearSelect');
 
-            document.getElementById('calendarMonthYear').innerText = `${currentMonthKey} ${year}`;
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthSelect.innerHTML = '';
+            months.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = m;
+                opt.className = "bg-slate-800 text-white";
+                if (idx === currentCalendarDate.getMonth()) opt.selected = true;
+                monthSelect.appendChild(opt);
+            });
+
+            yearSelect.innerHTML = '';
+            for (let y = 1950; y <= 2045; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y;
+                opt.className = "bg-slate-800 text-white";
+                if (y === currentCalendarDate.getFullYear()) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+        }
+
+        function onCalendarSelectorChange() {
+            const m = parseInt(document.getElementById('calMonthSelect').value);
+            const y = parseInt(document.getElementById('calYearSelect').value);
+            currentCalendarDate = new Date(y, m, 1);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const today = new Date();
+            const isCurrentRealMonth = (today.getFullYear() === year && today.getMonth() === month);
+            const todayDate = today.getDate();
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -542,16 +623,16 @@
                 grid.appendChild(emptyCell);
             }
 
-            let todayHoliday = "No major national holiday today.";
+            let activeHolidayText = "No major holiday on this date.";
 
             // Render days of the month
             for (let day = 1; day <= totalDays; day++) {
                 const cell = document.createElement('div');
                 const dateKey = `${month + 1}-${day}`;
                 const isHoliday = holidays[dateKey];
-                const isToday = day === todayDate;
+                const isToday = isCurrentRealMonth && (day === todayDate);
 
-                let classes = "py-1 rounded-lg flex flex-col items-center justify-center transition relative ";
+                let classes = "py-1.5 rounded-lg flex flex-col items-center justify-center transition relative cursor-pointer ";
                 if (isToday) {
                     classes += "bg-white text-indigo-900 font-extrabold shadow-md ";
                 } else if (isHoliday) {
@@ -567,20 +648,33 @@
                     const dot = document.createElement('span');
                     dot.className = "w-1 h-1 bg-yellow-300 rounded-full mt-0.5";
                     cell.appendChild(dot);
+                    
                     if (isToday) {
-                        todayHoliday = `Today is ${isHoliday}! 🎉`;
+                        activeHolidayText = `Today's Holiday: ${isHoliday} 🎉`;
                     }
                 }
+
+                // Click event to inspect date holidays
+                cell.onclick = () => {
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    if (isHoliday) {
+                        document.getElementById('holidayText').innerText = `${monthNames[month]} ${day}, ${year}: ${isHoliday} 🎉`;
+                    } else {
+                        document.getElementById('holidayText').innerText = `${monthNames[month]} ${day}, ${year}: No major holiday logged.`;
+                    }
+                };
 
                 grid.appendChild(cell);
             }
 
-            // Check if there's any holiday today matching dictionary
-            const todayKey = `${month + 1}-${todayDate}`;
-            if (holidays[todayKey]) {
-                todayHoliday = `Today's Holiday: ${holidays[todayKey]} 🎉`;
+            // Default notice text for current month/day if applicable
+            const todayKey = `${today.getMonth() + 1}-${today.getDate()}`;
+            if (isCurrentRealMonth && holidays[todayKey]) {
+                activeHolidayText = `Today's Holiday: ${holidays[todayKey]} 🎉`;
             }
-            document.getElementById('holidayText').innerText = todayHoliday;
+            if (!document.getElementById('holidayText').innerText.includes("Selected") || !isCurrentRealMonth) {
+                document.getElementById('holidayText').innerText = activeHolidayText;
+            }
         }
     </script>
 </body>
