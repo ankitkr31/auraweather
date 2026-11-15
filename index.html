@@ -3,38 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraWeather - Smart Weather, AQI & World Clock</title>
+    <title>AuraWeather - Smart Weather, AQI, World Clock, Timer & Calendar</title>
     <!-- Tailwind CSS for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Dynamic Theme Transitions */
+        /* Dynamic Theme Transitions & Animations */
         body {
-            transition: background 1s ease, color 1s ease;
+            transition: background 1.5s ease, color 1s ease;
+            overflow-x: hidden;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        .floating-blob {
+            animation: float 8s ease-in-out infinite;
+        }
+        .floating-blob-delayed {
+            animation: float 10s ease-in-out infinite 2s;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
     </style>
 </head>
-<body id="appBody" class="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-sans p-4 md:p-8">
+<body id="appBody" class="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 text-white font-sans p-4 md:p-8 relative">
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Animated Background Glowing Orbs -->
+    <div class="absolute top-10 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none floating-blob"></div>
+    <div class="absolute bottom-10 right-10 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl pointer-events-none floating-blob-delayed"></div>
+
+    <div class="max-w-5xl mx-auto space-y-6 relative z-10">
         
         <!-- Header & Search -->
-        <header class="flex flex-col md:flex-row justify-between items-center gap-4 glass-panel p-4 rounded-2xl shadow-lg">
+        <header class="flex flex-col md:flex-row justify-between items-center gap-4 glass-panel p-4 rounded-2xl shadow-xl">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-cloud-sun-rain text-3xl"></i>
+                <i class="fa-solid fa-cloud-sun-rain text-3xl text-yellow-300 drop-shadow"></i>
                 <h1 class="text-2xl font-bold tracking-wide">AuraWeather</h1>
             </div>
             <div class="flex items-center gap-2 w-full md:w-auto">
                 <input type="text" id="cityInput" placeholder="Search city..." 
                     class="px-4 py-2 rounded-xl bg-white/20 placeholder-white/70 text-white focus:outline-none focus:ring-2 focus:ring-white/50 w-full md:w-64">
-                <button onclick="fetchWeather()" class="px-5 py-2 rounded-xl bg-white/30 hover:bg-white/40 font-semibold transition">
+                <button onclick="fetchWeather()" class="px-5 py-2 rounded-xl bg-white/30 hover:bg-white/40 font-semibold transition shadow-md">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
@@ -48,16 +76,16 @@
                 <div>
                     <div class="flex justify-between items-start">
                         <div>
-                            <h2 id="cityName" class="text-3xl font-extrabold">Loading...</h2>
+                            <h2 id="cityName" class="text-3xl font-extrabold tracking-tight">Loading...</h2>
                             <p id="currentDate" class="text-sm text-white/80">--</p>
                         </div>
-                        <span id="weatherThemeBadge" class="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-white/20 rounded-full">--</span>
+                        <span id="weatherThemeBadge" class="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-white/20 rounded-full shadow-inner">--</span>
                     </div>
                     <div class="flex items-center my-6 gap-6">
-                        <i id="weatherIcon" class="fa-solid fa-sun text-6xl"></i>
+                        <i id="weatherIcon" class="fa-solid fa-sun text-6xl text-yellow-300 drop-shadow-lg"></i>
                         <div>
                             <div class="text-6xl font-black" id="temperature">--°C</div>
-                            <p id="weatherCondition" class="text-lg capitalize text-white/90">--</p>
+                            <p id="weatherCondition" class="text-lg capitalize text-white/90 font-medium">--</p>
                         </div>
                     </div>
                 </div>
@@ -81,7 +109,7 @@
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
                 <div>
                     <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-shield-heart"></i> Air & UV Quality
+                        <i class="fa-solid fa-shield-heart text-pink-300"></i> Air & UV Quality
                     </h3>
                     
                     <!-- AQI Widget -->
@@ -90,7 +118,7 @@
                             <span>Air Quality (AQI)</span>
                             <span id="aqiStatus" class="font-bold">--</span>
                         </div>
-                        <div class="w-full bg-black/20 h-3 rounded-full overflow-hidden">
+                        <div class="w-full bg-black/20 h-3 rounded-full overflow-hidden shadow-inner">
                             <div id="aqiBar" class="bg-green-400 h-full w-0 transition-all duration-500"></div>
                         </div>
                     </div>
@@ -114,60 +142,143 @@
         <!-- Hourly Forecast Section -->
         <div class="glass-panel p-6 rounded-3xl shadow-xl">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-clock"></i> Hourly Forecast
+                <i class="fa-solid fa-clock text-cyan-300"></i> Hourly Forecast
             </h3>
             <div id="hourlyContainer" class="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
                 <div class="text-sm text-white/70">Loading forecast...</div>
             </div>
         </div>
 
-        <!-- World Clock & Local Time Hub Section -->
-        <div class="glass-panel p-6 rounded-3xl shadow-xl space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-globe"></i> World Clocks Hub
-                </h3>
-                <!-- Add World Clock Form -->
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="timezoneSelect" class="px-4 py-2 rounded-xl bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50 w-full md:w-64">
-                        <option value="America/New_York" class="bg-slate-800 text-white">New York (USA)</option>
-                        <option value="Europe/London" class="bg-slate-800 text-white">London (UK)</option>
-                        <option value="Europe/Paris" class="bg-slate-800 text-white">Paris (France)</option>
-                        <option value="Asia/Tokyo" class="bg-slate-800 text-white">Tokyo (Japan)</option>
-                        <option value="Australia/Sydney" class="bg-slate-800 text-white">Sydney (Australia)</option>
-                        <option value="Asia/Dubai" class="bg-slate-800 text-white">Dubai (UAE)</option>
-                        <option value="America/Los_Angeles" class="bg-slate-800 text-white">Los Angeles (USA)</option>
-                        <option value="Asia/Singapore" class="bg-slate-800 text-white">Singapore</option>
-                    </select>
-                    <button onclick="addWorldClock()" class="px-4 py-2 rounded-xl bg-white/30 hover:bg-white/40 font-semibold transition whitespace-nowrap">
-                        <i class="fa-solid fa-plus"></i> Add Clock
-                    </button>
+        <!-- Utility Grid: World Clocks, Timer & Calendar -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- World Clock Hub (Col span 1) -->
+            <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-globe text-emerald-300"></i> World Clocks
+                        </h3>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <select id="timezoneSelect" class="px-3 py-2 text-sm rounded-xl bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/50 w-full">
+                            <option value="America/New_York" class="bg-slate-800 text-white">New York (USA)</option>
+                            <option value="Europe/London" class="bg-slate-800 text-white">London (UK)</option>
+                            <option value="Europe/Paris" class="bg-slate-800 text-white">Paris (France)</option>
+                            <option value="Asia/Tokyo" class="bg-slate-800 text-white">Tokyo (Japan)</option>
+                            <option value="Asia/Kolkata" class="bg-slate-800 text-white">Kolkata (India)</option>
+                            <option value="Australia/Sydney" class="bg-slate-800 text-white">Sydney (Australia)</option>
+                            <option value="Asia/Dubai" class="bg-slate-800 text-white">Dubai (UAE)</option>
+                        </select>
+                        <button onclick="addWorldClock()" class="px-3 py-2 rounded-xl bg-white/30 hover:bg-white/40 text-sm font-semibold transition whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                    <div id="clocksContainer" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        <!-- Clocks dynamically injected -->
+                    </div>
                 </div>
             </div>
 
-            <!-- Clocks Grid Container -->
-            <div id="clocksContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <!-- Dynamically injected clocks (Local Clock is added by default) -->
+            <!-- Timer & Stopwatch Hub (Col span 1) -->
+            <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
+                <div>
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-amber-300"></i> Timer & Stopwatch
+                    </h3>
+                    
+                    <!-- Timer Display -->
+                    <div class="text-center bg-black/20 p-4 rounded-2xl mb-4 border border-white/10">
+                        <div id="timerDisplay" class="text-4xl font-mono font-black tracking-wider">00:00:00</div>
+                        <div id="timerLabel" class="text-xs text-white/70 mt-1 uppercase tracking-widest">Ready</div>
+                    </div>
+
+                    <!-- Preset Buttons -->
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button onclick="setTimerPreset(1)" class="py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold transition">1m</button>
+                        <button onclick="setTimerPreset(5)" class="py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold transition">5m</button>
+                        <button onclick="setTimerPreset(25)" class="py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold transition">25m</button>
+                    </div>
+
+                    <!-- Timer Controls -->
+                    <div class="flex gap-2">
+                        <button onclick="startTimer()" class="flex-1 py-2 bg-green-500/40 hover:bg-green-500/60 rounded-xl font-bold text-sm transition border border-green-400/30">Start</button>
+                        <button onclick="pauseTimer()" class="flex-1 py-2 bg-yellow-500/40 hover:bg-yellow-500/60 rounded-xl font-bold text-sm transition border border-yellow-400/30">Pause</button>
+                        <button onclick="resetTimer()" class="flex-1 py-2 bg-red-500/40 hover:bg-red-500/60 rounded-xl font-bold text-sm transition border border-red-400/30">Reset</button>
+                    </div>
+                </div>
+                <div class="text-xs text-white/60 text-center pt-2 border-t border-white/20">
+                    Productivity Hub
+                </div>
             </div>
+
+            <!-- Calendar & Holidays Hub (Col span 1) -->
+            <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-rose-300"></i> Calendar & Holidays
+                        </h3>
+                        <span id="calendarMonthYear" class="text-xs font-semibold px-2 py-1 bg-white/20 rounded-lg">--</span>
+                    </div>
+
+                    <!-- Weekdays Header -->
+                    <div class="grid grid-cols-7 text-center text-xs font-bold text-white/70 mb-2">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+
+                    <!-- Days Grid -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
+                        <!-- Days injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Holiday Notice Box -->
+                <div id="holidayNotice" class="bg-white/10 p-2.5 rounded-xl border border-white/10 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-gift text-yellow-300 text-sm"></i>
+                    <span id="holidayText" class="truncate font-medium">Checking today's holiday status...</span>
+                </div>
+            </div>
+
         </div>
 
     </div>
 
     <!-- Application Script -->
     <script>
-        // Store user added world clocks
+        // --- State Variables ---
         let worldClocks = [
             { name: "Local Time", zone: Intl.DateTimeFormat().resolvedOptions().timeZone, isLocal: true },
             { name: "New York (USA)", zone: "America/New_York", isLocal: false },
             { name: "Tokyo (Japan)", zone: "Asia/Tokyo", isLocal: false }
         ];
 
-        // Default city load
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // Major National & Global Holidays Database (Month-Day key)
+        const holidays = {
+            "1-1": "New Year's Day",
+            "1-26": "Republic Day",
+            "2-14": "Valentine's Day",
+            "3-17": "St. Patrick's Day",
+            "4-22": "Earth Day",
+            "5-1": "Labour Day",
+            "7-4": "US Independence Day",
+            "8-15": "Independence Day",
+            "10-31": "Halloween",
+            "11-25": "Thanksgiving (Approx)",
+            "12-25": "Christmas Day",
+            "12-31": "New Year's Eve"
+        };
+
+        // --- Initialization ---
         window.addEventListener('DOMContentLoaded', () => {
             getWeatherData("Kolkata");
             initClocks();
-            // Update clocks every second
             setInterval(updateClocks, 1000);
+            renderCalendar();
         });
 
         async function fetchWeather() {
@@ -187,7 +298,7 @@
                     return;
                 }
 
-                const { latitude, longitude, name, country, timezone } = geoData.results[0];
+                const { latitude, longitude, name, country } = geoData.results[0];
                 document.getElementById('cityName').innerText = `${name}, ${country || ''}`;
 
                 const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,uv_index&air_quality=european_aqi&timezone=auto`);
@@ -218,7 +329,7 @@
             const conditionInfo = interpretWeatherCode(wCode, isDay);
 
             document.getElementById('weatherCondition').innerText = conditionInfo.text;
-            document.getElementById('weatherIcon').className = `fa-solid ${conditionInfo.icon} text-6xl`;
+            document.getElementById('weatherIcon').className = `fa-solid ${conditionInfo.icon} text-6xl drop-shadow-lg`;
             document.getElementById('weatherThemeBadge').innerText = isDay ? "Daytime" : "Nighttime";
 
             applyDynamicTheme(conditionInfo.theme, isDay);
@@ -234,37 +345,37 @@
         }
 
         function interpretWeatherCode(code, isDay) {
-            if (code === 0) return { text: isDay ? "Sunny" : "Clear Sky", icon: isDay ? "fa-sun" : "fa-moon", theme: "sunny" };
-            if ([1, 2].includes(code)) return { text: "Partly Cloudy", icon: isDay ? "fa-cloud-sun" : "fa-cloud-moon", theme: "cloudy" };
-            if (code === 3) return { text: "Overcast", icon: "fa-cloud", theme: "cloudy" };
-            if ([51, 53, 55, 61, 63, 65, 80, 81].includes(code)) return { text: "Rain Showers", icon: "fa-cloud-rain", theme: "rainy" };
-            if ([71, 73, 75, 85].includes(code)) return { text: "Snowfall", icon: "fa-snowflake", theme: "snow" };
-            if ([95, 96, 99].includes(code)) return { text: "Thunderstorm", icon: "fa-cloud-bolt", theme: "storm" };
-            return { text: "Fair Weather", icon: "fa-cloud", theme: "sunny" };
+            if (code === 0) return { text: isDay ? "Sunny" : "Clear Sky", icon: isDay ? "fa-sun text-yellow-300" : "fa-moon text-blue-200", theme: "sunny" };
+            if ([1, 2].includes(code)) return { text: "Partly Cloudy", icon: isDay ? "fa-cloud-sun text-yellow-200" : "fa-cloud-moon text-blue-200", theme: "cloudy" };
+            if (code === 3) return { text: "Overcast", icon: "fa-cloud text-slate-300", theme: "cloudy" };
+            if ([51, 53, 55, 61, 63, 65, 80, 81].includes(code)) return { text: "Rain Showers", icon: "fa-cloud-rain text-cyan-300", theme: "rainy" };
+            if ([71, 73, 75, 85].includes(code)) return { text: "Snowfall", icon: "fa-snowflake text-indigo-200", theme: "snow" };
+            if ([95, 96, 99].includes(code)) return { text: "Thunderstorm", icon: "fa-cloud-bolt text-purple-300", theme: "storm" };
+            return { text: "Fair Weather", icon: "fa-cloud text-white", theme: "sunny" };
         }
 
         function applyDynamicTheme(theme, isDay) {
             const body = document.getElementById('appBody');
             if (!isDay) {
-                body.className = "min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white font-sans p-4 md:p-8";
+                body.className = "min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 text-white font-sans p-4 md:p-8 relative";
                 return;
             }
 
             switch(theme) {
                 case 'sunny':
-                    body.className = "min-h-screen bg-gradient-to-br from-amber-400 via-orange-500 to-sky-400 text-white font-sans p-4 md:p-8";
+                    body.className = "min-h-screen bg-gradient-to-br from-amber-500 via-orange-600 to-sky-500 text-white font-sans p-4 md:p-8 relative";
                     break;
                 case 'rainy':
-                    body.className = "min-h-screen bg-gradient-to-br from-slate-700 via-blue-900 to-slate-800 text-white font-sans p-4 md:p-8";
+                    body.className = "min-h-screen bg-gradient-to-br from-slate-700 via-blue-900 to-slate-900 text-white font-sans p-4 md:p-8 relative";
                     break;
                 case 'cloudy':
-                    body.className = "min-h-screen bg-gradient-to-br from-sky-600 via-slate-500 to-zinc-700 text-white font-sans p-4 md:p-8";
+                    body.className = "min-h-screen bg-gradient-to-br from-sky-600 via-slate-600 to-zinc-800 text-white font-sans p-4 md:p-8 relative";
                     break;
                 case 'storm':
-                    body.className = "min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white font-sans p-4 md:p-8";
+                    body.className = "min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white font-sans p-4 md:p-8 relative";
                     break;
                 default:
-                    body.className = "min-h-screen bg-gradient-to-br from-blue-500 to-indigo-700 text-white font-sans p-4 md:p-8";
+                    body.className = "min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 text-white font-sans p-4 md:p-8 relative";
             }
         }
 
@@ -304,11 +415,11 @@
                 const info = interpretWeatherCode(code, 1);
 
                 const card = document.createElement('div');
-                card.className = "flex flex-col items-center justify-between p-3 min-w-[80px] bg-white/10 rounded-2xl border border-white/10 shrink-0";
+                card.className = "flex flex-col items-center justify-between p-3 min-w-[80px] bg-white/10 rounded-2xl border border-white/10 shrink-0 shadow-sm";
                 card.innerHTML = `
                     <span class="text-xs text-white/80">${timeStr}</span>
-                    <i class="fa-solid ${info.icon} text-2xl my-2"></i>
-                    <span class="font-bold text-lg">${temp}°C</span>
+                    <i class="fa-solid ${info.icon} text-xl my-2"></i>
+                    <span class="font-bold text-base">${temp}°C</span>
                 `;
                 container.appendChild(card);
             }
@@ -329,18 +440,15 @@
                 const dateString = now.toLocaleDateString('en-US', { timeZone: clock.zone, weekday: 'short', month: 'short', day: 'numeric' });
 
                 const card = document.createElement('div');
-                card.className = "bg-white/10 border border-white/20 rounded-2xl p-4 flex flex-col justify-between relative group";
+                card.className = "bg-white/10 border border-white/15 rounded-2xl p-3 flex flex-col justify-between relative";
                 card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start">
-                            <span class="text-xs font-bold uppercase tracking-wider text-white/70">${clock.name}</span>
-                            ${!clock.isLocal ? `<button onclick="removeWorldClock(${index})" class="text-white/50 hover:text-red-300 transition text-sm"><i class="fa-solid fa-xmark"></i></button>` : '<span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Primary</span>'}
-                        </div>
-                        <div class="text-2xl font-black mt-2 tracking-tight">${timeString}</div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-white/70">${clock.name}</span>
+                        ${!clock.isLocal ? `<button onclick="removeWorldClock(${index})" class="text-white/50 hover:text-red-300 transition text-xs"><i class="fa-solid fa-xmark"></i></button>` : '<span class="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">Primary</span>'}
                     </div>
-                    <div class="text-xs text-white/70 mt-2 pt-2 border-t border-white/10 flex justify-between">
+                    <div class="text-xl font-black mt-1 tracking-tight">${timeString}</div>
+                    <div class="text-[11px] text-white/70 mt-1 pt-1 border-t border-white/10 flex justify-between">
                         <span>${dateString}</span>
-                        <span class="font-mono text-[11px]">${clock.zone}</span>
                     </div>
                 `;
                 container.appendChild(card);
@@ -352,7 +460,6 @@
             const zone = select.value;
             const name = select.options[select.selectedIndex].text;
 
-            // Prevent duplicates
             if (worldClocks.some(c => c.zone === zone)) {
                 alert("This clock is already added to your hub.");
                 return;
@@ -365,6 +472,115 @@
         function removeWorldClock(index) {
             worldClocks.splice(index, 1);
             updateClocks();
+        }
+
+        // --- Timer & Stopwatch Functionality ---
+        function updateTimerDisplay() {
+            const hrs = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${hrs}:${mins}:${secs}`;
+        }
+
+        function setTimerPreset(minutes) {
+            pauseTimer();
+            timerSeconds = minutes * 60;
+            updateTimerDisplay();
+            document.getElementById('timerLabel').innerText = `${minutes} Min Countdown`;
+        }
+
+        function startTimer() {
+            if (isTimerRunning) return;
+            if (timerSeconds <= 0) timerSeconds = 300; // Default 5 mins if 0
+            isTimerRunning = true;
+            document.getElementById('timerLabel').innerText = "Running...";
+            
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    pauseTimer();
+                    document.getElementById('timerLabel').innerText = "Time's Up!";
+                    alert("Timer completed!");
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('timerLabel').innerText = "Paused";
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timerSeconds = 0;
+            updateTimerDisplay();
+            document.getElementById('timerLabel').innerText = "Ready";
+        }
+
+        // --- Calendar & Holiday Functionality ---
+        function renderCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const todayDate = now.getDate();
+            const currentMonthKey = now.toLocaleString('default', { month: 'long' });
+
+            document.getElementById('calendarMonthYear').innerText = `${currentMonthKey} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Blank spaces for previous month overflow
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                grid.appendChild(emptyCell);
+            }
+
+            let todayHoliday = "No major national holiday today.";
+
+            // Render days of the month
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                const dateKey = `${month + 1}-${day}`;
+                const isHoliday = holidays[dateKey];
+                const isToday = day === todayDate;
+
+                let classes = "py-1 rounded-lg flex flex-col items-center justify-center transition relative ";
+                if (isToday) {
+                    classes += "bg-white text-indigo-900 font-extrabold shadow-md ";
+                } else if (isHoliday) {
+                    classes += "bg-rose-500/30 text-white font-bold border border-rose-300/40 ";
+                } else {
+                    classes += "hover:bg-white/10 text-white/90 ";
+                }
+
+                cell.className = classes;
+                cell.innerHTML = `<span>${day}</span>`;
+
+                if (isHoliday) {
+                    const dot = document.createElement('span');
+                    dot.className = "w-1 h-1 bg-yellow-300 rounded-full mt-0.5";
+                    cell.appendChild(dot);
+                    if (isToday) {
+                        todayHoliday = `Today is ${isHoliday}! 🎉`;
+                    }
+                }
+
+                grid.appendChild(cell);
+            }
+
+            // Check if there's any holiday today matching dictionary
+            const todayKey = `${month + 1}-${todayDate}`;
+            if (holidays[todayKey]) {
+                todayHoliday = `Today's Holiday: ${holidays[todayKey]} 🎉`;
+            }
+            document.getElementById('holidayText').innerText = todayHoliday;
         }
     </script>
 </body>
